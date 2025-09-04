@@ -17,7 +17,7 @@ local MinDistance = 200 -- distância mínima para atualizar o alvo
 --// Notificação inicial
 StarterGui:SetCore("SendNotification", {
     Title = "By ImcomumPlayer",
-    Text = "Aimbot + ESP (Top 3 Próximos) Ativado",
+    Text = "Aimbot V2.5 HAHAHAHAHAHAHAH",
     Icon = "rbxthumb://type=AvatarHeadShot&id=9244921300&w=420&h=420",
     Duration = 5
 })
@@ -25,7 +25,7 @@ StarterGui:SetCore("SendNotification", {
 --// Som ao executar
 local sound = Instance.new("Sound", workspace)
 sound.SoundId = "rbxassetid://6821054463"
-sound.Volume = 5
+sound.Volume = 10
 sound:Play()
 
 --// GUI de seleção
@@ -43,7 +43,7 @@ Instance.new("UICorner", frame).CornerRadius = UDim.new(0,10)
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1,0,0,30)
 title.BackgroundTransparency = 1
-title.Text = "Selecione o Aimbot:"
+title.Text = "Qual o Time você ira atacar"
 title.Font = Enum.Font.SourceSansBold
 title.TextColor3 = Color3.fromRGB(255,255,255)
 title.TextScaled = true
@@ -60,7 +60,7 @@ btnPolicia.TextScaled = true
 btnPolicia.MouseButton1Click:Connect(function()
     TargetMode = "Policia"
     StarterGui:SetCore("SendNotification", {
-        Title = "Aimbot",
+        Title = "ImcomumPlayer",
         Text = "Focando apenas em jogadores da Team Segundo e Terceiro",
         Duration = 4
     })
@@ -79,7 +79,7 @@ btnLadrao.TextScaled = true
 btnLadrao.MouseButton1Click:Connect(function()
     TargetMode = "Ladrao"
     StarterGui:SetCore("SendNotification", {
-        Title = "Aimbot",
+        Title = "ImcomumPlayer",
         Text = "Focando apenas em jogadores da Team Polícia Especial e Polícia",
         Duration = 4
     })
