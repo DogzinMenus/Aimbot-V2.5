@@ -1,1 +1,204 @@
+--// Serviços
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+local Workspace = game:GetService("Workspace")
+
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+
+--// Config
+local AimPart = "Head"
+local AimbotEnabled = true
+local ESPParts = {}
+local TargetMode = nil -- "Policia" ou "Ladrao"
+local MinDistance = 200 -- distância mínima para atualizar o alvo
+
+--// Notificação inicial
+StarterGui:SetCore("SendNotification", {
+    Title = "By ImcomumPlayer",
+    Text = "Aimbot + ESP (Top 3 Próximos) Ativado",
+    Icon = "rbxthumb://type=AvatarHeadShot&id=9244921300&w=420&h=420",
+    Duration = 5
+})
+
+--// Som ao executar
+local sound = Instance.new("Sound", workspace)
+sound.SoundId = "rbxassetid://6821054463"
+sound.Volume = 5
+sound:Play()
+
+--// GUI de seleção
+local screenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+screenGui.Name = "AimbotSelectGUI"
+
+local frame = Instance.new("Frame", screenGui)
+frame.Size = UDim2.new(0,300,0,120)
+frame.Position = UDim2.new(0.5,0,0.5,0)
+frame.AnchorPoint = Vector2.new(0.5,0.5)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+frame.BorderSizePixel = 0
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0,10)
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1,0,0,30)
+title.BackgroundTransparency = 1
+title.Text = "Selecione o Aimbot:"
+title.Font = Enum.Font.SourceSansBold
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.TextScaled = true
+
+-- Botão Azul (Polícia)
+local btnPolicia = Instance.new("TextButton", frame)
+btnPolicia.Size = UDim2.new(0.4,0,0.4,0)
+btnPolicia.Position = UDim2.new(0.1,0,0.5,0)
+btnPolicia.Text = "Polícia"
+btnPolicia.BackgroundColor3 = Color3.fromRGB(0,0,255)
+btnPolicia.TextColor3 = Color3.fromRGB(255,255,255)
+btnPolicia.Font = Enum.Font.SourceSansBold
+btnPolicia.TextScaled = true
+btnPolicia.MouseButton1Click:Connect(function()
+    TargetMode = "Policia"
+    StarterGui:SetCore("SendNotification", {
+        Title = "Aimbot",
+        Text = "Focando apenas em jogadores da Team Segundo e Terceiro",
+        Duration = 4
+    })
+    frame:Destroy()
+end)
+
+-- Botão Vermelho (Ladrão)
+local btnLadrao = Instance.new("TextButton", frame)
+btnLadrao.Size = UDim2.new(0.4,0,0.4,0)
+btnLadrao.Position = UDim2.new(0.5,0,0.5,0)
+btnLadrao.Text = "Ladrão"
+btnLadrao.BackgroundColor3 = Color3.fromRGB(255,0,0)
+btnLadrao.TextColor3 = Color3.fromRGB(255,255,255)
+btnLadrao.Font = Enum.Font.SourceSansBold
+btnLadrao.TextScaled = true
+btnLadrao.MouseButton1Click:Connect(function()
+    TargetMode = "Ladrao"
+    StarterGui:SetCore("SendNotification", {
+        Title = "Aimbot",
+        Text = "Focando apenas em jogadores da Team Polícia Especial e Polícia",
+        Duration = 4
+    })
+    frame:Destroy()
+end)
+
+--// Verificação de times
+local function isTarget(player)
+    if not player.Team then return false end
+    if TargetMode == "Policia" then
+        return (player.Team.Name == "Segundo" or player.Team.Name == "Terceiro")
+    elseif TargetMode == "Ladrao" then
+        return (player.Team.Name == "Polícia Especial" or player.Team.Name == "Polícia")
+    end
+    return false
+end
+
+--// Função para criar ESP
+local function createESP(player)
+    if player == LocalPlayer then return end
+    if ESPParts[player] then return end
+    if not isTarget(player) then return end
+    local char = player.Character
+    if not char or not char:FindFirstChild("Head") then return end
+    local head = char.Head
+
+    local nameLabel = Instance.new("BillboardGui", head)
+    nameLabel.Size = UDim2.new(0,150,0,25)
+    nameLabel.StudsOffset = Vector3.new(0,3,0)
+    nameLabel.AlwaysOnTop = true
+    local nameText = Instance.new("TextLabel", nameLabel)
+    nameText.Size = UDim2.new(1,0,1,0)
+    nameText.BackgroundTransparency = 1
+    nameText.Font = Enum.Font.SourceSansBold
+    nameText.TextScaled = true
+    nameText.Name = "NameText"
+    nameText.Text = player.Name
+    nameText.TextColor3 = player.Team and player.Team.TeamColor.Color or Color3.fromRGB(255,255,255)
+
+    ESPParts[player] = {
+        Gui = nameLabel,
+        Text = nameText
+    }
+end
+
+--// Função para remover ESP
+local function removeESP(player)
+    if ESPParts[player] then
+        if ESPParts[player].Gui then
+            ESPParts[player].Gui:Destroy()
+        end
+        ESPParts[player] = nil
+    end
+end
+
+--// Atualizador do ESP (Top 3 mais próximos com distância mínima)
+RunService.RenderStepped:Connect(function()
+    if not TargetMode then return end
+    local myChar = LocalPlayer.Character
+    if not myChar or not myChar:FindFirstChild("HumanoidRootPart") then return end
+    local myRoot = myChar.HumanoidRootPart
+
+    local distances = {}
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and isTarget(player) and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid and humanoid.Health > 0 then
+                local dist = (player.Character.HumanoidRootPart.Position - myRoot.Position).Magnitude
+                table.insert(distances, {Player = player, Distance = dist})
+            end
+        end
+    end
+
+    table.sort(distances, function(a,b) return a.Distance < b.Distance end)
+
+    local top3 = {}
+    for i = 1, math.min(3, #distances) do
+        if distances[i].Distance <= MinDistance then
+            top3[distances[i].Player] = true
+            if not ESPParts[distances[i].Player] then
+                createESP(distances[i].Player)
+            end
+        end
+    end
+
+    for plr, parts in pairs(ESPParts) do
+        if not top3[plr] then
+            removeESP(plr)
+        else
+            if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                local dist = (plr.Character.HumanoidRootPart.Position - myRoot.Position).Magnitude
+                parts.Text.Text = string.format("%s\n[%.1f]", plr.Name, dist)
+                parts.Text.TextColor3 = plr.Team and plr.Team.TeamColor.Color or Color3.fromRGB(255,255,255)
+            end
+        end
+    end
+end)
+
+--// Aimbot focado no mais próximo
+RunService.RenderStepped:Connect(function()
+    if AimbotEnabled and TargetMode then
+        local closestPlayer = nil
+        local shortestDist = math.huge
+        local myChar = LocalPlayer.Character
+        if not myChar or not myChar:FindFirstChild("HumanoidRootPart") then return end
+        local myRoot = myChar.HumanoidRootPart
+
+        for player, _ in pairs(ESPParts) do
+            if player.Character and player.Character:FindFirstChild(AimPart) then
+                local dist = (player.Character[AimPart].Position - myRoot.Position).Magnitude
+                if dist < shortestDist then
+                    closestPlayer = player
+                    shortestDist = dist
+                end
+            end
+        end
+        if closestPlayer then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, closestPlayer.Character[AimPart].Position)
+        end
+    end
+end)
 
