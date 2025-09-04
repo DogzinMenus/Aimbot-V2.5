@@ -1,3 +1,14 @@
+--// Verificação do Place
+if game.PlaceId ~= 14787286344 then
+    local StarterGui = game:GetService("StarterGui")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Aviso",
+        Text = "Este script só funciona no jogo: TPN Trocação na Favela!",
+        Duration = 8
+    })
+    return -- interrompe a execução do script
+end
+
 --// Serviços
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
